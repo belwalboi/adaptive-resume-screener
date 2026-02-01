@@ -1,0 +1,19 @@
+version: "3.9"
+
+services:
+  ml:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: adaptive_resume_ml
+    volumes:
+      - ../:/workspace
+      - C:/Users/Shubh Agnihotri/.kaggle:/root/.kaggle:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              capabilities: [gpu]
+    tty: true
+
