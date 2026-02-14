@@ -1,0 +1,35 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adaptive Resume Screener</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="app">
+    <section class="card">
+      <h1>Adaptive Resume Screener</h1>
+      <p>Upload a resume, paste a job description, and get ATS + semantic matching insights.</p>
+
+      <form id="analyze-form">
+        <label>
+          Resume File (.txt/.pdf/.docx)
+          <input type="file" id="resume" accept=".txt,.pdf,.docx" required />
+        </label>
+
+        <label>
+          Job Description
+          <textarea id="job_description" rows="8" placeholder="Paste target job description here..." required></textarea>
+        </label>
+
+        <button type="submit">Analyze Resume</button>
+      </form>
+
+      <div id="result" class="result hidden"></div>
+    </section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

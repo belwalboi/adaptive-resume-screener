@@ -1,0 +1,110 @@
+﻿:root {
+  color-scheme: light;
+  --bg: #eef1f5;
+  --card: #ffffff;
+  --text: #172033;
+  --muted: #58657d;
+  --accent: #00695c;
+  --danger: #b00020;
+  --border: #d4dbe6;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: linear-gradient(160deg, #e7ecf2 0%, #f4f7fb 100%);
+  color: var(--text);
+}
+
+.app {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+}
+
+.card {
+  width: min(900px, 100%);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 16px 45px rgba(25, 36, 65, 0.12);
+}
+
+h1 {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+p {
+  color: var(--muted);
+}
+
+form {
+  display: grid;
+  gap: 12px;
+}
+
+label {
+  display: grid;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 0.95rem;
+}
+
+textarea {
+  resize: vertical;
+}
+
+button {
+  margin-top: 8px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+button:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
+.result {
+  margin-top: 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  background: #f9fbff;
+}
+
+.result h3 {
+  margin-top: 0;
+}
+
+.result.error {
+  border-color: #ffc2cc;
+  background: #fff4f6;
+  color: var(--danger);
+}
+
+.hidden {
+  display: none;
+}

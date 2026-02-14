@@ -1,0 +1,6 @@
+John Doe
+Python developer with 4 years experience.
+Built 6 projects using FastAPI, SQL, Docker.
+GitHub: https://github.com/johndoe/resume-screener
+AWS Certified Cloud Practitioner.
+B.Tech in Computer Science.
