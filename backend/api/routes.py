@@ -60,7 +60,23 @@ def predict(payload: PredictionRequest, request: Request) -> PredictionResponse:
     repository = getattr(request.app.state, "prediction_repository", None)
     if repository is not None:
         try:
-            repository.save_prediction(features=features, result=result, source="manual")
+            repository.save_prediction(
+                features=features,
+                result=result,
+                model_version=model_service.active_model_version,
+                source="manual",
+                analysis_data={
+                    "feature_profile": "legacy_manual_input",
+                    "model_feature_order": [
+                        "years_experience",
+                        "skills_match_score",
+                        "education_level",
+                        "projects_count",
+                        "github_activity_score",
+                        "certifications_count",
+                    ],
+                },
+            )
         except Exception:
             logger.exception("Prediction generated but failed to persist")
 
@@ -104,9 +120,20 @@ async def analyze_resume(
         logger.exception("Analyze flow failed")
         raise HTTPException(status_code=500, detail="Analyze flow failed") from exc
 
+    blended_probability = round(
+        (float(model_result["probability"]) + (float(analysis.final_score) / 100.0)) / 2.0,
+        4,
+    )
+    screening_result = {
+        "probability": blended_probability,
+        "decision": "shortlist" if blended_probability >= float(model_result["threshold"]) else "reject",
+        "threshold": float(model_result["threshold"]),
+    }
+
     prediction_id = repository.save_prediction(
         features=analysis.model_features,
-        result=model_result,
+        result=screening_result,
+        model_version=model_service.active_model_version,
         source="analyze",
         analysis_data={
             "resume_filename": resume.filename,
@@ -118,6 +145,10 @@ async def analyze_resume(
             "matched_keywords": analysis.matched_keywords,
             "missing_keywords": analysis.missing_keywords,
             "explanation": analysis.explanation,
+            "extracted_features": analysis.extracted_features,
+            "feature_profile": "derived_resume_analysis",
+            "model_probability": model_result["probability"],
+            "model_decision": model_result["decision"],
             "model_feature_order": [
                 "years_experience",
                 "skills_match_score",
@@ -131,9 +162,9 @@ async def analyze_resume(
 
     return AnalysisResponse(
         prediction_id=prediction_id,
-        probability=model_result["probability"],
-        decision=model_result["decision"],
-        threshold=model_result["threshold"],
+        probability=screening_result["probability"],
+        decision=screening_result["decision"],
+        threshold=screening_result["threshold"],
         ats_score=analysis.ats_score,
         semantic_score=analysis.semantic_score,
         final_score=analysis.final_score,

@@ -19,7 +19,6 @@ configure_logging()
 logger = logging.getLogger(__name__)
 
 MODEL_PATH = "ml/models/resume_net.pt"
-DEFAULT_THRESHOLD = 0.6
 DB_PATH = "database/resume_screening.db"
 SCHEMA_PATH = "database/schema.sql"
 
@@ -71,6 +70,7 @@ RETRAIN_AUTO_ENABLED = _read_bool_env("RETRAIN_AUTO_ENABLED", True)
 RETRAIN_EPOCHS = _read_positive_int_env("RETRAIN_EPOCHS", 20)
 RETRAIN_MIN_NEW_SAMPLES = _read_positive_int_env("RETRAIN_MIN_NEW_SAMPLES", RETRAIN_MIN_FEEDBACK)
 RETRAIN_MIN_VAL_ACCURACY = _read_float_env("RETRAIN_MIN_VAL_ACCURACY", 0.55)
+DEFAULT_THRESHOLD = _read_float_env("MODEL_THRESHOLD", 0.30)
 
 
 def create_app(load_model_on_startup: bool = True, initialize_db: bool = True) -> FastAPI:
@@ -96,6 +96,7 @@ def create_app(load_model_on_startup: bool = True, initialize_db: bool = True) -
         )
 
         logger.info("Retraining minimum feedback threshold=%s", RETRAIN_MIN_FEEDBACK)
+        logger.info("Model decision threshold=%s", DEFAULT_THRESHOLD)
         logger.info(
             "Adaptive retraining enabled=%s epochs=%s min_new_samples=%s min_val_acc=%s",
             RETRAIN_AUTO_ENABLED,

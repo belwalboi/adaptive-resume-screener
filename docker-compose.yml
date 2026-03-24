@@ -12,6 +12,7 @@ services:
       - RETRAIN_EPOCHS=${RETRAIN_EPOCHS:-20}
       - RETRAIN_MIN_NEW_SAMPLES=${RETRAIN_MIN_NEW_SAMPLES:-10}
       - RETRAIN_MIN_VAL_ACCURACY=${RETRAIN_MIN_VAL_ACCURACY:-0.55}
+      - MODEL_THRESHOLD=${MODEL_THRESHOLD:-0.30}
     volumes:
       - ./database:/app/database
     restart: unless-stopped

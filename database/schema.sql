@@ -23,7 +23,13 @@
     matched_keywords_json TEXT NULL,
     missing_keywords_json TEXT NULL,
     explanation TEXT NULL,
-    model_features_json TEXT NULL
+    model_features_json TEXT NULL,
+    project_count REAL NULL,
+    resume_length REAL NULL,
+    github_activity REAL NULL,
+    extracted_features_json TEXT NULL,
+    feature_order_json TEXT NULL,
+    feature_profile TEXT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_predictions_created_at ON predictions(created_at);

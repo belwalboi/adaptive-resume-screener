@@ -16,6 +16,12 @@ class PredictionRepository:
         ("missing_keywords_json", "TEXT"),
         ("explanation", "TEXT"),
         ("model_features_json", "TEXT"),
+        ("project_count", "REAL"),
+        ("resume_length", "REAL"),
+        ("github_activity", "REAL"),
+        ("extracted_features_json", "TEXT"),
+        ("feature_order_json", "TEXT"),
+        ("feature_profile", "TEXT"),
     ]
 
     def __init__(self, db_path: str | Path) -> None:
@@ -52,6 +58,22 @@ class PredictionRepository:
         analysis_data: dict | None = None,
     ) -> int:
         analysis_data = analysis_data or {}
+        extracted_features = analysis_data.get("extracted_features") or {}
+
+        project_count = extracted_features.get("project_count")
+        resume_length = extracted_features.get("resume_length")
+        github_activity = extracted_features.get("github_activity")
+        legacy_projects_count = features[3]
+        legacy_github_activity_score = features[4]
+        legacy_certifications_count = features[5]
+
+        if source == "manual":
+            project_count = features[3]
+            github_activity = features[4]
+        else:
+            legacy_github_activity_score = github_activity
+            legacy_certifications_count = 0.0
+
         query = """
         INSERT INTO predictions (
             years_experience,
@@ -74,8 +96,14 @@ class PredictionRepository:
             matched_keywords_json,
             missing_keywords_json,
             explanation,
-            model_features_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            model_features_json,
+            project_count,
+            resume_length,
+            github_activity,
+            extracted_features_json,
+            feature_order_json,
+            feature_profile
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """
 
         with sqlite3.connect(self.db_path) as conn:
@@ -86,9 +114,9 @@ class PredictionRepository:
                     features[0],
                     features[1],
                     features[2],
-                    features[3],
-                    features[4],
-                    features[5],
+                    legacy_projects_count,
+                    legacy_github_activity_score,
+                    legacy_certifications_count,
                     result["probability"],
                     result["decision"],
                     result["threshold"],
@@ -104,6 +132,12 @@ class PredictionRepository:
                     json.dumps(analysis_data.get("missing_keywords", [])),
                     analysis_data.get("explanation"),
                     json.dumps(features),
+                    project_count,
+                    resume_length,
+                    github_activity,
+                    json.dumps(extracted_features) if extracted_features else None,
+                    json.dumps(analysis_data.get("model_feature_order", [])),
+                    analysis_data.get("feature_profile"),
                 ),
             )
             conn.commit()

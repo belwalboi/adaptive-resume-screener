@@ -11,8 +11,8 @@ class RetrainingStatus:
 
 class RetrainingTriggerService:
     """
-    Placeholder retraining gate.
-    For now, this only reports readiness based on labeled feedback volume.
+    Reports whether the adaptive retraining pipeline has enough reviewed
+    feedback to justify another training cycle.
     """
 
     def __init__(self, minimum_required: int = 100) -> None:
@@ -21,10 +21,10 @@ class RetrainingTriggerService:
     def evaluate(self, labeled_feedback_count: int) -> RetrainingStatus:
         ready = labeled_feedback_count >= self.minimum_required
         if ready:
-            message = "Retraining threshold reached. Integrate your pipeline trigger here."
+            message = "Enough labeled feedback is available for adaptive retraining."
         else:
             remaining = self.minimum_required - labeled_feedback_count
-            message = f"Not enough labeled feedback yet. Need {remaining} more samples."
+            message = f"Not enough labeled feedback yet. Need {remaining} more reviewed samples."
 
         return RetrainingStatus(
             ready=ready,

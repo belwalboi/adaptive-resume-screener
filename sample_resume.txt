@@ -4,3 +4,10 @@ Built 6 projects using FastAPI, SQL, Docker.
 GitHub: https://github.com/johndoe/resume-screener
 AWS Certified Cloud Practitioner.
 B.Tech in Computer Science.
+
+
+Looking for a Python FastAPI engineer with SQL, Docker, GitHub, and cloud exposure.
+
+
+
+Looking for a Data Science and Machine Learning candidate with strong Python, SQL, Pandas, NumPy, scikit-learn, Flask, NLP, TensorFlow, PyTorch, Keras, GitHub, Generative AI, LLM, RAG, data analytics, feature engineering, model evaluation, and REST API development experience.
