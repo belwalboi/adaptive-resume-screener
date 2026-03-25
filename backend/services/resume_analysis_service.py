@@ -20,7 +20,12 @@ class AnalysisResult:
 
 class ResumeAnalysisService:
     TECH_ALIAS_MAP = {
+        "agile": {"agile", "scrum"},
         "ai": {"ai", "artificial intelligence"},
+        "backend development": {"backend development", "backend services"},
+        "bug fixing": {"bug fixing", "bugfixing", "debugging"},
+        "code review": {"code review", "code reviews", "peer review", "peer reviews"},
+        "data structures": {"data structures", "dsa"},
         "ml": {"ml", "machine learning"},
         "data science": {"data science"},
         "python": {"python"},
@@ -42,6 +47,8 @@ class ResumeAnalysisService:
         "deep learning": {"deep learning"},
         "computer vision": {"computer vision"},
         "nlp": {"nlp", "natural language processing"},
+        "ext js": {"ext js", "extjs"},
+        "frontend development": {"frontend development", "front-end development", "front end development"},
         "generative ai": {"generative ai", "genai"},
         "llm": {"llm", "large language model", "large language models", "foundation model", "foundation models"},
         "llmops": {"llmops"},
@@ -49,13 +56,23 @@ class ResumeAnalysisService:
         "langchain": {"langchain"},
         "langgraph": {"langgraph"},
         "multi-agent systems": {"multi-agent", "multi agent", "ai agents", "agentic ai", "intelligent systems"},
+        "github copilot": {"github copilot", "copilot"},
+        "java": {"java"},
+        "jira": {"jira"},
+        "microservices": {"microservice", "microservices", "microservices architecture"},
         "docker": {"docker", "containerization"},
         "kubernetes": {"kubernetes"},
+        "mysql": {"mysql"},
+        "object oriented programming": {"object oriented programming", "object-oriented programming", "oop"},
         "azure": {"azure", "azure ai", "azure ai foundry", "cosmosdb", "azure cosmosdb"},
         "aws": {"aws"},
         "gcp": {"gcp", "google cloud"},
         "databricks": {"databricks"},
+        "react": {"react", "react js", "reactjs"},
+        "rest api": {"rest api", "rest apis", "restful api", "restful apis", "restful service", "restful services"},
+        "root cause analysis": {"root cause analysis"},
         "spark": {"spark"},
+        "spring boot": {"spring boot", "spring framework"},
         "cuda": {"cuda"},
         "tensorflow": {"tensorflow", "tensorflow.js", "tensorflowjs"},
         "keras": {"keras"},
@@ -134,8 +151,8 @@ class ResumeAnalysisService:
         final_score = round((0.55 * skills_match_score) + (0.30 * semantic_score * 100) + (0.15 * ats_score), 2)
 
         explanation = (
-            f"Matched {len(matched)} of {len(jd_keywords)} critical JD keywords. "
-            f"ATS section completeness is {round(section_score * 100, 1)}%. "
+            f"ATS-style score is heuristic, not a vendor ATS score: matched {len(matched)} of {len(jd_keywords)} "
+            f"tracked JD keywords with {round(section_score * 100, 1)}% resume section completeness. "
             f"Semantic alignment score is {semantic_score}."
         )
 

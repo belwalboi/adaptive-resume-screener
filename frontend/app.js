@@ -190,7 +190,7 @@ form.addEventListener("submit", async (event) => {
       </div>
 
       <div class="metric-grid">
-        ${renderMetricCard("ATS Score", formatNumber(data.ats_score, 2), data.ats_score, "Formatting and keyword alignment", "tone-ats")}
+        ${renderMetricCard("ATS-Style Score", formatNumber(data.ats_score, 2), data.ats_score, "Heuristic keyword coverage and section quality", "tone-ats")}
         ${renderMetricCard("Semantic Score", formatNumber(data.semantic_score, 4), Number(data.semantic_score) * 100, "Meaning-level similarity with the role", "tone-semantic")}
         ${renderMetricCard("Final Score", formatNumber(data.final_score, 2), data.final_score, "Overall screening fit", "tone-final")}
       </div>
@@ -216,7 +216,7 @@ form.addEventListener("submit", async (event) => {
         <p class="section-kicker">Why This Result Appeared</p>
         <h3>Screening Summary</h3>
         <p>${escapeHtml(data.explanation || "")}</p>
-        <p class="support-copy">Use this as an intelligent screening aid rather than a final hiring decision.</p>
+        <p class="support-copy">Use this as a heuristic screening aid rather than a final hiring decision.</p>
       </article>
     `);
   } catch (error) {
