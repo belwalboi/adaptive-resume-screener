@@ -1,6 +1,6 @@
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, Request, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Body, File, Form, HTTPException, Request, UploadFile
 
 from backend.schemas.prediction import (
     AnalysisResponse,
@@ -178,15 +178,19 @@ async def analyze_resume(
 @router.post("/feedback/{prediction_id}", response_model=FeedbackResponse)
 def submit_feedback(
     prediction_id: int,
-    payload: FeedbackRequest,
     request: Request,
     background_tasks: BackgroundTasks,
+    payload: FeedbackRequest = Body(...),
 ) -> FeedbackResponse:
     repository = getattr(request.app.state, "prediction_repository", None)
     if repository is None:
         raise HTTPException(status_code=503, detail="Prediction repository unavailable")
 
-    saved = repository.save_feedback(prediction_id=prediction_id, reviewed_label=payload.reviewed_label)
+    saved = repository.save_feedback(
+        prediction_id=prediction_id,
+        reviewed_label=payload.reviewed_label,
+        feedback_note=payload.feedback_note,
+    )
     if not saved:
         raise HTTPException(status_code=404, detail="Prediction record not found")
 
@@ -194,6 +198,24 @@ def submit_feedback(
     adaptive_retrainer = getattr(request.app.state, "adaptive_retrainer", None)
     model_service = getattr(request.app.state, "model_service", None)
     retraining_service = getattr(request.app.state, "retraining_service", None)
+    labeled_feedback_count = repository.labeled_feedback_count()
+    retrain_available = False
+    minimum_required = None
+    message = "Feedback saved successfully."
+
+    if retraining_service is not None:
+        status = retraining_service.evaluate(labeled_feedback_count=labeled_feedback_count)
+        retrain_available = status.ready
+        minimum_required = status.minimum_required
+        message = status.message
+
+    logger.info(
+        "Saved feedback for prediction_id=%s reviewed_label=%s retrain_available=%s labeled_feedback_count=%s",
+        prediction_id,
+        payload.reviewed_label,
+        retrain_available,
+        labeled_feedback_count,
+    )
 
     if auto_retrain_enabled and adaptive_retrainer and model_service and retraining_service:
         background_tasks.add_task(
@@ -203,7 +225,14 @@ def submit_feedback(
             int(retraining_service.minimum_required),
         )
 
-    return FeedbackResponse(prediction_id=prediction_id, saved=True)
+    return FeedbackResponse(
+        prediction_id=prediction_id,
+        saved=True,
+        retrain_available=retrain_available,
+        labeled_feedback_count=labeled_feedback_count,
+        minimum_required=minimum_required,
+        message=message,
+    )
 
 
 @router.get("/feedback/retraining-status", response_model=RetrainingStatusResponse)

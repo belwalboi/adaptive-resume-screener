@@ -1,150 +1,156 @@
 # Adaptive Resume Screener
 
-Adaptive Resume Screener is a college mini-project that evaluates a resume against a job description and returns an explainable shortlist recommendation. The project combines resume parsing, ATS-style heuristic checks, TF-IDF semantic similarity, a PyTorch classification model, SQLite persistence, and a feedback-driven retraining loop.
+Adaptive Resume Screener is a full-stack mini-project that compares a resume against a target job description and produces an explainable screening result. The project combines rule-based text analysis with a PyTorch model, stores results in SQLite, and now supports feedback persistence from the website.
 
-## Professor-Facing Summary
+This repository is presentation-ready for a 5-student team project. The core flow works end to end:
 
-- **Problem:** Resume screening is time-consuming and often inconsistent when done manually.
-- **Goal:** Build a prototype that can compare a resume with a target job description and generate an explainable recommendation.
-- **Input:** Resume file (`.txt`, `.pdf`, `.docx`) and job description text.
-- **Output:** ATS score, semantic score, extracted features, matched and missing keywords, model probability, and final decision.
-- **Core learning areas:** FastAPI, frontend integration, file parsing, feature engineering, PyTorch inference, SQLite persistence, and adaptive ML workflows.
+1. Upload a resume file.
+2. Paste a job description.
+3. Generate ATS-style, semantic, and blended screening scores.
+4. Store the prediction in SQLite.
+5. Submit feedback from the UI and store it in the same database for future retraining.
 
-## What The System Does
+## Problem Statement
 
-1. Accepts a resume upload and job description.
-2. Extracts readable text from TXT, PDF, or DOCX files.
-3. Measures keyword coverage and section completeness for ATS-style scoring.
-4. Computes semantic similarity using TF-IDF cosine similarity.
-5. Builds 6 structured features for the trained `ResumeNet` model.
-6. Blends the model output with the explainable final score for the upload-based screening decision.
-7. Accepts reviewed feedback and can trigger adaptive retraining when enough labeled samples are available.
+Manual resume screening is slow, repetitive, and inconsistent. Recruiters or reviewers often need a quick first-pass filter before doing a deeper manual evaluation.
 
-## End-To-End Architecture
+This project demonstrates how a lightweight AI-assisted screening system can:
 
-```text
-Frontend (HTML/CSS/JS)
-        |
-        v
-FastAPI API (`/analyze`, `/feedback`, `/health`)
-        |
-        +--> ResumeParserService
-        |      - TXT / PDF / DOCX text extraction
-        |
-        +--> ResumeAnalysisService
-        |      - keyword coverage
-        |      - ATS-style section scoring
-        |      - semantic similarity
-        |      - 6-feature generation
-        |
-        +--> ModelService
-        |      - loads PyTorch ResumeNet checkpoint
-        |      - returns shortlist / reject prediction
-        |
-        +--> PredictionRepository (SQLite)
-               - stores predictions
-               - stores explainability metadata
-               - stores reviewed labels
-               - supports adaptive retraining
-```
+- parse resumes from `.txt`, `.pdf`, and `.docx`
+- extract interpretable features
+- compare candidate content against a job description
+- return an explainable shortlist recommendation
+- collect user feedback for adaptive improvement
 
-## Model Features Used By ResumeNet
+## Tech Stack
 
-The neural model uses exactly 6 numeric features:
+- Frontend: HTML, CSS, Vanilla JavaScript
+- Backend: FastAPI, Pydantic, Uvicorn
+- ML: PyTorch, scikit-learn
+- Database: SQLite
+- File parsing: `pypdf`, `python-docx`
+- Testing: `pytest`, `httpx`
+- Containerization: Docker, Docker Compose
 
-| Feature | Meaning |
-| --- | --- |
-| `years_experience` | Maximum detected years of experience |
-| `skills_match_score` | Percentage of tracked job keywords found in the resume |
-| `education_level` | Encoded education level from diploma to PhD |
-| `project_count` | Estimated number of projects mentioned |
-| `resume_length` | Length of extracted resume text |
-| `github_activity` | Heuristic score based on GitHub and open-source references |
+## How The System Works
+
+### 1. Resume parsing
+
+The backend accepts `.txt`, `.pdf`, and `.docx` files and extracts readable text.
+
+### 2. Explainable analysis
+
+The analysis service computes:
+
+- matched keywords
+- missing keywords
+- ATS-style score
+- semantic similarity score
+- final blended score
+
+### 3. Model features
+
+The PyTorch model uses these 6 numeric features:
+
+1. `years_experience`
+2. `skills_match_score`
+3. `education_level`
+4. `project_count`
+5. `resume_length`
+6. `github_activity`
+
+### 4. Prediction storage
+
+Every analysis is stored in `database/resume_screening.db` with:
+
+- prediction probability
+- shortlist or reject decision
+- threshold used
+- source of prediction
+- explainability data
+- review status and feedback note
+
+### 5. Feedback loop
+
+From the website, a user can mark the recommendation as:
+
+- correct
+- incorrect
+
+An optional note is also stored. Labeled feedback is later used by the adaptive retraining pipeline in `feedback_loop/`.
 
 ## Current Model Snapshot
 
-- Active default decision threshold: `0.30`
-- Threshold is configurable via `MODEL_THRESHOLD`
-- Reproducible evaluation command:
+The saved checkpoint in `ml/models/resume_net.pt` evaluates to:
 
-```powershell
-python -m ml.training.evaluate_model
-```
+- Threshold: `0.30`
+- Accuracy: `0.6988`
+- Precision: `0.6988`
+- Recall: `1.0000`
+- F1: `0.8227`
+- Test size: `6000`
 
-Current saved checkpoint evaluation on the processed holdout set:
+These results are suitable for a college prototype demo. They should not be presented as production hiring quality.
 
-| Metric | Value |
-| --- | --- |
-| Accuracy | `0.6988` |
-| Precision | `0.6988` |
-| Recall | `1.0000` |
-| F1 Score | `0.8227` |
-| Test size | `6000` |
-
-This project is a prototype, so these metrics should be treated as a baseline rather than a production-grade benchmark. The threshold is intentionally calibrated for higher recall during demos so suitable resumes are less likely to be rejected too aggressively.
-
-## How To Explain This Project In A Viva
-
-Use this short structure during your demo:
-
-1. **Problem statement:** recruiters need faster and more consistent resume screening.
-2. **Approach:** combine interpretable text analysis with a trained ML model.
-3. **Pipeline:** upload resume -> parse text -> compute ATS and semantic signals -> create 6 features -> run model -> save result.
-4. **Decision logic:** the final upload-based recommendation blends model confidence with the explainable fit score to reduce harsh false rejections.
-5. **Adaptive part:** reviewed predictions are stored and can later retrain the model automatically.
-6. **Limitation:** this is a prototype and still relies on heuristic text analysis rather than large production datasets or transformer embeddings.
-
-## Demo Flow For The Professor
-
-1. Start the API or Docker stack.
-2. Open the frontend in the browser.
-3. Upload [`sample_resume.txt`](sample_resume.txt).
-4. Paste a job description such as:
+## Project Structure
 
 ```text
-Looking for a Python FastAPI engineer with SQL, Docker, GitHub, and cloud exposure.
+adaptive-resume-screener/
+|-- backend/
+|   |-- api/routes.py
+|   |-- schemas/prediction.py
+|   |-- services/
+|   |   |-- model_service.py
+|   |   |-- prediction_repository.py
+|   |   |-- resume_analysis_service.py
+|   |   `-- resume_parser_service.py
+|   `-- main.py
+|-- frontend/
+|   |-- index.html
+|   |-- app.js
+|   `-- styles.css
+|-- database/
+|   |-- schema.sql
+|   `-- resume_screening.db
+|-- ml/
+|   |-- inference/
+|   |-- models/
+|   |-- preprocessing/
+|   `-- training/
+|-- feedback_loop/
+|-- tests/
+|-- data/
+|-- docker/
+|-- sample_resume.txt
+`-- docker-compose.yml
 ```
 
-5. Show the professor:
-   - the matched and missing keywords
-   - the ATS, semantic, and final scores
-   - the extracted features used by the model
-   - the final shortlist or reject recommendation
-6. Mention that predictions are stored and can later be reviewed for feedback-based retraining.
+## Main API Endpoints
 
-## Important Folders
+The backend currently exposes these routes without an `/api` prefix:
 
-- `backend/`: FastAPI app, routes, schemas, and service layer
-- `frontend/`: Static presentation UI for upload and result visualization
-- `ml/models/`: `ResumeNet` architecture and trained checkpoint
-- `ml/preprocessing/`: dataset preprocessing script for the 6-feature pipeline
-- `ml/training/`: model training and evaluation scripts
-- `feedback_loop/`: retraining trigger and adaptive retraining logic
-- `database/`: SQLite schema and local database storage
-- `notebooks/`: exploratory, training, and evaluation notebooks
-- `tests/`: API tests
+- `GET /health`
+- `POST /predict`
+- `POST /analyze`
+- `POST /feedback/{prediction_id}`
+- `GET /feedback/retraining-status`
 
-## Local Setup
+## Run Locally
+
+### Backend
 
 ```powershell
-cd D:\Important_Projects\adaptive-resume-screener
 python -m venv .venv
 .venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
 pip install -r requirements.txt
+uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
-## Run The Backend Locally
+### Frontend
 
-```powershell
-uvicorn backend.main:app --reload --host 0.0.0.0 --port 8000
-```
+Open `frontend/index.html` in a browser, or serve it using a simple static server. During local demo use, the frontend expects the backend at `http://localhost:8000`.
 
-Open:
-
-- Swagger docs: `http://localhost:8000/docs`
-
-## Run The Full Stack With Docker
+### Docker
 
 ```powershell
 Copy-Item .env.example .env
@@ -153,79 +159,43 @@ docker compose up --build
 
 Open:
 
-- Frontend app: `http://localhost:3000`
-- Backend docs: `http://localhost:8000/docs`
+- Frontend: `http://localhost:3000`
+- API docs: `http://localhost:8000/docs`
 
-## Reproduce The ML Pipeline
-
-Prepare tensors from the raw dataset:
-
-```powershell
-python -m ml.preprocessing.preprocess_tabular
-```
-
-Train and save a new model checkpoint:
-
-```powershell
-python -m ml.training.train_model
-```
-
-Evaluate the current saved checkpoint:
-
-```powershell
-python -m ml.training.evaluate_model
-```
-
-## API Endpoints
-
-- `GET /health`: checks model readiness and active threshold
-- `POST /predict`: legacy manual feature endpoint
-- `POST /analyze`: main upload + job description endpoint
-- `POST /feedback/{prediction_id}`: stores reviewed labels
-- `GET /feedback/retraining-status`: reports whether enough reviewed data exists for retraining
-
-## Adaptive Retraining Logic
-
-When reviewed feedback is submitted:
-
-1. The reviewed label is saved in SQLite.
-2. The system checks whether enough new labeled samples exist.
-3. If class-balance and validation checks pass, a new model is trained.
-4. The new checkpoint is stored in `ml/models/registry/`.
-5. The API hot-reloads the promoted model without a manual restart.
-
-Registry metadata is stored in:
-
-- `ml/models/registry/metadata.json`
-
-## Environment Variables
-
-- `MODEL_THRESHOLD` default `0.30`
-- `RETRAIN_MIN_FEEDBACK` default `100`
-- `RETRAIN_AUTO_ENABLED` default `true`
-- `RETRAIN_EPOCHS` default `20`
-- `RETRAIN_MIN_NEW_SAMPLES` default `10`
-- `RETRAIN_MIN_VAL_ACCURACY` default `0.55`
-
-Demo-friendly values are included in [`.env.example`](.env.example).
-
-## Test The Project
+## Run Tests
 
 ```powershell
 python -m pytest -q
 ```
 
-## Known Limitations
+## Recommended Demo Flow
 
-- ATS scoring is heuristic and not calibrated using real recruiter feedback.
-- Semantic matching uses TF-IDF, not transformer embeddings.
-- Resume parsing quality depends on the extractable text quality inside PDF and DOCX files.
-- The current project is designed as a prototype demo, not a production hiring system.
+1. Show the problem statement.
+2. Open the frontend and upload `sample_resume.txt`.
+3. Paste a targeted job description.
+4. Run analysis and explain the scores.
+5. Show that the prediction was stored in SQLite.
+6. Submit feedback from the website.
+7. Show that `reviewed_label`, `reviewed_at`, and `feedback_note` are saved in the database.
+8. Explain how adaptive retraining would use the collected feedback later.
 
-## Possible Future Improvements
+For presentation help, see:
 
-- Replace TF-IDF similarity with sentence-transformer embeddings
-- Add recruiter login, candidate dashboard, and feedback history UI
-- Support batch resume uploads and ranking
-- Add better explainability charts and confusion matrix visuals to the frontend
-- Introduce approval workflows before promoting retrained models
+- `VIVA_QUICK_REFERENCE.md`
+- `TEAM_ROLES_AND_RESPONSIBILITIES.md`
+
+## Limitations
+
+- Resume parsing quality depends on the quality of text extraction from PDF and DOCX files.
+- Keyword matching and ATS-style scoring are heuristic, not equivalent to a commercial ATS.
+- Semantic similarity uses TF-IDF, not transformer embeddings.
+- The model is trained on compact engineered features, not full-document embeddings.
+- This is a prototype for academic demonstration, not a production hiring system.
+
+## Future Improvements
+
+- Add batch screening and ranking
+- Add recruiter login and feedback history
+- Replace TF-IDF semantic matching with embeddings
+- Add dashboards for analytics and model drift
+- Add approval controls before promoting retrained models

@@ -13,6 +13,7 @@
     model_version TEXT NOT NULL,
     reviewed_label INTEGER NULL CHECK(reviewed_label IN (0, 1)),
     reviewed_at TEXT NULL,
+    feedback_note TEXT NULL,
     source TEXT NOT NULL DEFAULT 'manual',
     resume_filename TEXT NULL,
     job_description TEXT NULL,

@@ -218,7 +218,127 @@ form.addEventListener("submit", async (event) => {
         <p>${escapeHtml(data.explanation || "")}</p>
         <p class="support-copy">Use this as a heuristic screening aid rather than a final hiring decision.</p>
       </article>
+
+      <article class="feedback-panel">
+        <p class="section-kicker">Help Us Improve</p>
+        <h3>Was this recommendation accurate?</h3>
+        <p class="feedback-intro">Your feedback helps us retrain and improve the screening model over time.</p>
+        
+        <form id="feedback-form" class="feedback-form">
+          <div class="feedback-buttons">
+            <button type="button" class="feedback-btn feedback-correct" data-label="1">
+              <span class="feedback-icon">✓</span>
+              <span class="feedback-text">Correct</span>
+              <span class="feedback-subtext">The recommendation was accurate</span>
+            </button>
+            <button type="button" class="feedback-btn feedback-incorrect" data-label="0">
+              <span class="feedback-icon">✗</span>
+              <span class="feedback-text">Incorrect</span>
+              <span class="feedback-subtext">The recommendation was wrong</span>
+            </button>
+          </div>
+
+          <label class="feedback-note-field">
+            <span class="field-label">Optional: Add a note</span>
+            <textarea id="feedback-note" class="feedback-note" placeholder="Why do you think this was correct or incorrect? (optional)" rows="3"></textarea>
+          </label>
+
+          <button type="submit" id="feedback-submit-button" class="feedback-submit-button" disabled>
+            Submit Feedback
+          </button>
+
+          <div id="feedback-status" class="feedback-status hidden"></div>
+        </form>
+      </article>
     `);
+
+    // Handle feedback submission
+    const feedbackForm = document.getElementById("feedback-form");
+    const feedbackButtons = feedbackForm.querySelectorAll(".feedback-btn");
+    const feedbackSubmitButton = document.getElementById("feedback-submit-button");
+    const feedbackStatus = document.getElementById("feedback-status");
+    let selectedLabel = null;
+
+    feedbackButtons.forEach((button) => {
+      button.addEventListener("click", (e) => {
+        e.preventDefault();
+        selectedLabel = button.dataset.label;
+        feedbackButtons.forEach((btn) => btn.classList.remove("selected"));
+        button.classList.add("selected");
+        feedbackSubmitButton.disabled = false;
+      });
+    });
+
+    feedbackForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (selectedLabel === null) {
+        feedbackStatus.classList.remove("hidden");
+        feedbackStatus.classList.remove("success");
+        feedbackStatus.classList.add("error");
+        feedbackStatus.textContent = "Please select 'Correct' or 'Incorrect' before submitting.";
+        return;
+      }
+
+      const feedbackNote = document.getElementById("feedback-note").value.trim();
+      let submissionSucceeded = false;
+
+      feedbackSubmitButton.disabled = true;
+      feedbackSubmitButton.textContent = "Submitting...";
+      feedbackStatus.classList.add("hidden");
+      feedbackStatus.classList.remove("error", "success");
+
+      try {
+        const feedbackResponse = await fetch(`${API_BASE_URL}/feedback/${data.prediction_id}`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            reviewed_label: parseInt(selectedLabel, 10),
+            feedback_note: feedbackNote || null,
+          }),
+        });
+
+        if (!feedbackResponse.ok) {
+          const error = await feedbackResponse.json();
+          throw new Error(error.detail || "Failed to submit feedback");
+        }
+
+        const feedbackResult = await feedbackResponse.json();
+        submissionSucceeded = true;
+        const hasProgressInfo = Number.isInteger(feedbackResult.labeled_feedback_count)
+          && Number.isInteger(feedbackResult.minimum_required);
+        const progressMessage = hasProgressInfo
+          ? `<p>${escapeHtml(feedbackResult.labeled_feedback_count)} reviewed samples saved out of ${escapeHtml(feedbackResult.minimum_required)} needed for retraining.</p>`
+          : "";
+
+        feedbackStatus.classList.remove("hidden");
+        feedbackStatus.classList.remove("error");
+        feedbackStatus.classList.add("success");
+        feedbackStatus.innerHTML = `
+          <p><strong>✓ Feedback received!</strong></p>
+          <p>Thank you for helping improve our screening model.</p>
+          ${progressMessage}
+          ${feedbackResult.retrain_available ? '<p class="retrain-notice">🎯 We have enough feedback to retrain the model!</p>' : ''}
+        `;
+
+        feedbackButtons.forEach((btn) => btn.disabled = true);
+        feedbackForm.style.opacity = "0.6";
+        feedbackSubmitButton.textContent = "Feedback Submitted";
+      } catch (error) {
+        feedbackStatus.classList.remove("hidden");
+        feedbackStatus.classList.remove("success");
+        feedbackStatus.classList.add("error");
+        feedbackStatus.textContent = `Error: ${escapeHtml(error.message)}`;
+        feedbackSubmitButton.disabled = false;
+        feedbackSubmitButton.textContent = "Submit Feedback";
+      } finally {
+        if (submissionSucceeded) {
+          feedbackSubmitButton.disabled = true;
+        }
+      }
+    });
   } catch (error) {
     showResult(`Error: ${escapeHtml(error.message)}`, true);
   } finally {

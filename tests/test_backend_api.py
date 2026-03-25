@@ -22,14 +22,16 @@ class DummyModelService:
 class DummyRepository:
     def __init__(self):
         self.feedback_count = 0
+        self.last_feedback_note = None
 
     def save_prediction(self, features, result, model_version="resume_net_v1", source="manual", analysis_data=None):
         return 1
 
-    def save_feedback(self, prediction_id, reviewed_label):
+    def save_feedback(self, prediction_id, reviewed_label, feedback_note=None):
         if prediction_id != 1:
             return False
         self.feedback_count += 1
+        self.last_feedback_note = feedback_note
         return True
 
     def labeled_feedback_count(self):
@@ -144,11 +146,27 @@ def test_feedback_and_retraining_status():
 
     feedback_response = client.post("/feedback/1", json={"reviewed_label": 1})
     assert feedback_response.status_code == 200
+    feedback_body = feedback_response.json()
+    assert feedback_body["saved"] is True
+    assert feedback_body["retrain_available"] is False
+    assert feedback_body["labeled_feedback_count"] == 1
 
     retraining_response = client.get("/feedback/retraining-status")
     assert retraining_response.status_code == 200
     body = retraining_response.json()
     assert body["labeled_feedback_count"] == 1
+
+
+def test_feedback_accepts_optional_note():
+    client = _build_test_client()
+
+    feedback_response = client.post(
+        "/feedback/1",
+        json={"reviewed_label": 0, "feedback_note": "Screening missed the relevant projects."},
+    )
+
+    assert feedback_response.status_code == 200
+    assert client.app.state.prediction_repository.last_feedback_note == "Screening missed the relevant projects."
 
 
 def test_analyze_validation_error_for_missing_job_description():

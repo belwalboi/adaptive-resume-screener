@@ -1,6 +1,10 @@
-﻿import json
+import json
+import logging
 import sqlite3
 from pathlib import Path
+
+
+logger = logging.getLogger(__name__)
 
 
 class PredictionRepository:
@@ -143,17 +147,18 @@ class PredictionRepository:
             conn.commit()
             return int(cursor.lastrowid)
 
-    def save_feedback(self, prediction_id: int, reviewed_label: int) -> bool:
+    def save_feedback(self, prediction_id: int, reviewed_label: int, feedback_note: str | None = None) -> bool:
         query = """
         UPDATE predictions
-        SET reviewed_label = ?, reviewed_at = CURRENT_TIMESTAMP
+        SET reviewed_label = ?, reviewed_at = CURRENT_TIMESTAMP, feedback_note = ?
         WHERE id = ?
         """
 
         with sqlite3.connect(self.db_path) as conn:
             cursor = conn.cursor()
-            cursor.execute(query, (reviewed_label, prediction_id))
+            cursor.execute(query, (reviewed_label, feedback_note, prediction_id))
             conn.commit()
+            logger.info("Feedback update affected %s row(s) for prediction_id=%s", cursor.rowcount, prediction_id)
             return cursor.rowcount > 0
 
     def labeled_feedback_count(self) -> int:

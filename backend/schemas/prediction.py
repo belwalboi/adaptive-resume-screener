@@ -51,11 +51,16 @@ class HealthResponse(BaseModel):
 
 class FeedbackRequest(BaseModel):
     reviewed_label: int = Field(..., ge=0, le=1)
+    feedback_note: str | None = Field(None, max_length=1000)
 
 
 class FeedbackResponse(BaseModel):
     prediction_id: int
     saved: bool
+    retrain_available: bool = False
+    labeled_feedback_count: int | None = None
+    minimum_required: int | None = None
+    message: str | None = None
 
 
 class RetrainingStatusResponse(BaseModel):
