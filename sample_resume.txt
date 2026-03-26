@@ -11,3 +11,30 @@ Looking for a Python FastAPI engineer with SQL, Docker, GitHub, and cloud exposu
 
 
 Looking for a Data Science and Machine Learning candidate with strong Python, SQL, Pandas, NumPy, scikit-learn, Flask, NLP, TensorFlow, PyTorch, Keras, GitHub, Generative AI, LLM, RAG, data analytics, feature engineering, model evaluation, and REST API development experience.
+
+
+Looking for a Full Stack Web Developer with expertise in React, Node.js, PostgreSQL, REST APIs, Docker, Git, AWS, and agile development methodologies.
+
+
+Looking for a DevOps Engineer with experience in Kubernetes, Docker, CI/CD pipelines, Jenkins, GitLab, AWS, Azure, Terraform, monitored systems, and infrastructure automation.
+
+
+Looking for a Backend Software Engineer with 3+ years experience in Java, Spring Boot, Microservices, SQL databases, REST APIs, Docker, Kubernetes, and cloud platforms.
+
+
+Looking for a Mobile App Developer experienced in iOS/Android development, Swift, Kotlin, React Native, Firebase, and mobile UI/UX design.
+
+
+Looking for a Solutions Architect with experience in cloud infrastructure, AWS/Azure, system design, scalability, security, and enterprise solutions.
+
+
+Looking for a QA Automation Engineer with expertise in Selenium, Python, Java, TestNG, Jenkins, API testing, and continuous integration environments.
+
+
+Looking for a Data Engineer with strong skills in ETL pipelines, Apache Spark, Python, SQL, data warehousing, Apache Airflow, and cloud data platforms.
+
+
+Looking for a Frontend Engineer with 5+ years experience in JavaScript, React, Vue.js, CSS, HTML, Webpack, and modern web development practices.
+
+
+Looking for a Network Security Specialist with expertise in network protocols, firewalls, penetration testing, cybersecurity frameworks, and threat analysis.
