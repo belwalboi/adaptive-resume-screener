@@ -1,6 +1,8 @@
 import logging
 import os
+import tempfile
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -18,9 +20,35 @@ from feedback_loop.retraining_trigger import RetrainingTriggerService
 configure_logging()
 logger = logging.getLogger(__name__)
 
-MODEL_PATH = "ml/models/resume_net.pt"
-DB_PATH = "database/resume_screening.db"
-SCHEMA_PATH = "database/schema.sql"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+RUNTIME_STORAGE_ROOT = (
+    PROJECT_ROOT
+    if not os.getenv("VERCEL")
+    else Path(tempfile.gettempdir()) / "adaptive-resume-screener"
+)
+
+
+def _resolve_path(path: str | Path) -> Path:
+    candidate = Path(path).expanduser()
+    return candidate if candidate.is_absolute() else PROJECT_ROOT / candidate
+
+
+def _read_path_env(name: str, default: str | Path) -> Path:
+    raw = os.getenv(name)
+    return _resolve_path(raw) if raw else _resolve_path(default)
+
+
+MODEL_PATH = _read_path_env("MODEL_PATH", PROJECT_ROOT / "ml" / "models" / "resume_net.pt")
+DB_PATH = _read_path_env("DB_PATH", RUNTIME_STORAGE_ROOT / "database" / "resume_screening.db")
+SCHEMA_PATH = _read_path_env("SCHEMA_PATH", PROJECT_ROOT / "database" / "schema.sql")
+MODEL_REGISTRY_PATH = _read_path_env(
+    "MODEL_REGISTRY_PATH",
+    RUNTIME_STORAGE_ROOT / "ml" / "models" / "registry" / "metadata.json",
+)
+MODEL_REGISTRY_DIR = _read_path_env(
+    "MODEL_REGISTRY_DIR",
+    RUNTIME_STORAGE_ROOT / "ml" / "models" / "registry",
+)
 
 
 def _read_positive_int_env(name: str, default: int) -> int:
@@ -82,19 +110,22 @@ def create_app(load_model_on_startup: bool = True, initialize_db: bool = True) -
         app.state.resume_analysis_service = ResumeAnalysisService()
         app.state.auto_retrain_enabled = RETRAIN_AUTO_ENABLED
         app.state.adaptive_retrainer = AdaptiveRetrainer(
-            registry_path="ml/models/registry/metadata.json",
-            models_dir="ml/models/registry",
+            registry_path=MODEL_REGISTRY_PATH,
+            models_dir=MODEL_REGISTRY_DIR,
             retrain_epochs=RETRAIN_EPOCHS,
             min_new_samples=RETRAIN_MIN_NEW_SAMPLES,
             min_validation_accuracy=RETRAIN_MIN_VAL_ACCURACY,
         )
 
-        active_model_path = app.state.adaptive_retrainer.initialize_registry(default_model_path=MODEL_PATH)
+        active_model_path = app.state.adaptive_retrainer.initialize_registry(default_model_path=str(MODEL_PATH))
         app.state.model_service = ModelService(
             model_path=active_model_path,
             threshold=DEFAULT_THRESHOLD,
         )
 
+        logger.info("Runtime storage root=%s", RUNTIME_STORAGE_ROOT)
+        logger.info("Using database path=%s", DB_PATH)
+        logger.info("Using model registry path=%s", MODEL_REGISTRY_PATH)
         logger.info("Retraining minimum feedback threshold=%s", RETRAIN_MIN_FEEDBACK)
         logger.info("Model decision threshold=%s", DEFAULT_THRESHOLD)
         logger.info(

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Adaptive Resume Screener</title>
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <main class="page">
+    <section class="hero panel">
+      <div class="hero-copy">
+        <p class="kicker">Smart Resume Matching</p>
+        <h1>Adaptive Resume Screener</h1>
+        <p class="hero-text">
+          Upload a resume, add a target role description, and get a clean match summary with ATS scoring, semantic alignment,
+          extracted features, and a final shortlist recommendation.
+        </p>
+
+        <div class="hero-tags">
+          <span class="hero-tag">ATS-Style Fit</span>
+          <span class="hero-tag">Semantic Match</span>
+          <span class="hero-tag">Feature-Based ML</span>
+        </div>
+      </div>
+
+      <div class="hero-grid">
+        <article class="hero-card hero-card-primary">
+          <span class="hero-card-label">Best For</span>
+          <strong>Data, software, AI, and analytics role screening</strong>
+        </article>
+
+        <article class="hero-card hero-card-secondary">
+          <span class="hero-card-label">What You See</span>
+          <strong>Strengths, missing keywords, extracted features, and decision clarity</strong>
+        </article>
+
+        <article class="hero-card hero-card-accent">
+          <span class="hero-card-label">Why It Helps</span>
+          <strong>It turns resume screening into something faster, more explainable, and easier to review</strong>
+        </article>
+      </div>
+    </section>
+
+    <section class="workspace">
+      <section class="panel analyzer-panel">
+        <div class="section-heading">
+          <p class="section-kicker">Screening Workspace</p>
+          <h2>Start a new analysis</h2>
+          <p>
+            Add a resume and a role-specific job description. More specific responsibilities, tools, and skill requirements usually
+            produce better screening results.
+          </p>
+        </div>
+
+        <div class="helper-banner">
+          <strong>Tip:</strong>
+          Mention the exact tools and skills you care about in the job description for a clearer match result.
+        </div>
+
+        <form id="analyze-form">
+          <label class="field upload-field">
+            <span class="field-label">Resume File</span>
+            <span class="field-hint">Accepted formats: .txt, .pdf, .docx</span>
+            <input type="file" id="resume" accept=".txt,.pdf,.docx" required />
+            <span id="file-meta" class="file-meta">No file selected yet.</span>
+          </label>
+
+          <label class="field">
+            <span class="field-label">Job Description</span>
+            <span class="field-hint">Use a focused description with tools, responsibilities, and required skills.</span>
+            <textarea id="job_description" rows="9" placeholder="Paste the target job description here..." required></textarea>
+          </label>
+
+          <div class="tip-row">
+            <span class="tip-pill">Use role-specific skills</span>
+            <span class="tip-pill">Avoid long generic descriptions</span>
+            <span class="tip-pill">Include must-have tools</span>
+          </div>
+
+          <button type="submit" id="submit-button">Analyze Resume</button>
+        </form>
+      </section>
+
+      <aside class="side-stack">
+        <section class="panel info-panel">
+          <p class="section-kicker">What You Get</p>
+          <h2>Readable screening output</h2>
+          <ul class="feature-bullets">
+            <li>Keyword strengths and missing terms</li>
+            <li>ATS-style completeness score</li>
+            <li>Semantic alignment with the role</li>
+            <li>Structured features used by the model</li>
+            <li>A clear shortlist recommendation</li>
+          </ul>
+        </section>
+
+        <section class="panel signal-panel">
+          <p class="section-kicker">Scoring Signals</p>
+          <div class="signal-grid">
+            <article class="signal-card signal-ats">
+              <span>ATS-Style</span>
+              <strong>Keyword coverage and section quality</strong>
+            </article>
+            <article class="signal-card signal-semantic">
+              <span>Semantic</span>
+              <strong>How closely the resume matches the role language</strong>
+            </article>
+            <article class="signal-card signal-model">
+              <span>Model</span>
+              <strong>Feature-based shortlist prediction</strong>
+            </article>
+          </div>
+        </section>
+
+        <section class="panel note-panel">
+          <p class="section-kicker">Before You Analyze</p>
+          <p>
+            If the result feels too weak, shorten the job description and make it more targeted. A precise role description usually
+            produces a more meaningful match than a broad one.
+          </p>
+        </section>
+      </aside>
+    </section>
+
+    <section id="result" class="panel result-shell hidden" aria-live="polite"></section>
+  </main>
+
+  <script src="./app.js"></script>
+</body>
+</html>

@@ -162,6 +162,22 @@ Open:
 - Frontend: `http://localhost:3000`
 - API docs: `http://localhost:8000/docs`
 
+## Deploy To Vercel
+
+This repository now includes a Vercel-ready FastAPI entrypoint at `main.py` and static frontend assets under `public/`, which matches Vercel's current FastAPI deployment layout.
+
+If you connect the repo to Vercel, it should serve:
+
+- the website from `/`
+- the FastAPI app from the same domain
+- API docs from `/docs`
+
+Important note for storage:
+
+- On Vercel, the app defaults SQLite and adaptive model registry writes to the runtime temp directory.
+- That makes feedback persistence and retrained model artifacts temporary across cold starts and redeploys.
+- For durable production persistence, set `DB_PATH`, `MODEL_REGISTRY_PATH`, and `MODEL_REGISTRY_DIR` to persistent storage or move to a hosted database.
+
 ## Run Tests
 
 ```powershell
