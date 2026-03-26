@@ -164,7 +164,7 @@ Open:
 
 ## Deploy To Vercel
 
-This repository now includes a Vercel-ready FastAPI entrypoint at `main.py` and static frontend assets under `public/`, which matches Vercel's current FastAPI deployment layout.
+This repository now includes Vercel-ready FastAPI entrypoints at `app.py` and `main.py`, plus static frontend assets under `public/`, which matches Vercel's current FastAPI deployment layout.
 
 If you connect the repo to Vercel, it should serve:
 
