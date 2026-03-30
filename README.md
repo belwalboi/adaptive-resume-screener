@@ -52,12 +52,28 @@ The analysis service computes:
 
 The PyTorch model uses these 6 numeric features:
 
-1. `years_experience`
-2. `skills_match_score`
-3. `education_level`
-4. `project_count`
-5. `resume_length`
-6. `github_activity`
+| # | Feature | Description |
+| --- | --- | --- |
+| 1 | `years_experience` | Estimated years of relevant work experience. |
+| 2 | `skills_match_score` | Percent-style score for overlap between resume and job skills. |
+| 3 | `education_level` | Encoded education tier used by the model pipeline. |
+| 4 | `project_count` | Number of relevant projects detected in the resume. |
+| 5 | `resume_length` | Approximate resume text length signal. |
+| 6 | `github_activity` | Activity proxy derived from portfolio/GitHub mentions. |
+
+#### ResumeNet architecture (simple sketch)
+
+```text
+Input (6 features)
+   │
+   ├─ In-model normalization: (x - mean) / std
+   │
+   ├─ Linear(6 → 128) + ReLU + BatchNorm1d
+   │
+   ├─ Linear(128 → 64) + ReLU
+   │
+   └─ Linear(64 → 1)  →  screening logit
+```
 
 ### 4. Prediction storage
 
@@ -81,16 +97,88 @@ An optional note is also stored. Labeled feedback is later used by the adaptive 
 
 ## Current Model Snapshot
 
-The saved checkpoint in `ml/models/resume_net.pt` evaluates to:
+The saved checkpoint in `ml/models/resume_net.pt` (test size: `6000`) reports:
 
-- Threshold: `0.30`
-- Accuracy: `0.6988`
-- Precision: `0.6988`
-- Recall: `1.0000`
-- F1: `0.8227`
-- Test size: `6000`
+| Metric | Value |
+| --- | --- |
+| Threshold | `0.30` |
+| Accuracy | `0.6988` |
+| Precision | `0.6988` |
+| Recall | `1.0000` |
+| F1 | `0.8227` |
+| AUC-ROC | `0.7982` |
 
-These results are suitable for a college prototype demo. They should not be presented as production hiring quality.
+This threshold is intentionally **recall-oriented** (more permissive) to reduce false negatives in early filtering.
+
+The model should be used for **first-pass screening only**, not as a final hiring decision system.
+
+### ROC Curve
+
+![ROC curve for ResumeNet](notebooks/plots/roc_curve.png)
+
+### Confusion Matrix
+
+![Confusion matrix for ResumeNet](notebooks/plots/confusion_matrix.png)
+
+## SQLite Schema and Feedback Linkage
+
+The app stores predictions and feedback in a single SQLite table: `predictions`.
+
+### What is stored in SQLite
+
+- core model inputs and outputs (`years_experience`, `skills_match_score`, `education_level`, `probability`, `decision`, `threshold`, `model_version`)
+- analysis artifacts for explainability (`ats_score`, `semantic_score`, `final_score`, matched/missing keywords, explanation)
+- provenance fields (`source`, `created_at`, `resume_filename`, `job_description`, `resume_excerpt`)
+- reviewer feedback fields (`reviewed_label`, `reviewed_at`, `feedback_note`)
+
+### How feedback is linked to `prediction_id`
+
+- each prediction insert returns an auto-increment `id`
+- `/analyze` response returns this value as `prediction_id`
+- `/feedback/{prediction_id}` updates that same row (`WHERE id = ?`) with `reviewed_label`, `reviewed_at`, and optional `feedback_note`
+
+### How retraining readiness is tracked
+
+- readiness is computed from `COUNT(*) WHERE reviewed_label IS NOT NULL`
+- the retraining trigger compares labeled count vs a configured minimum (default: `100`)
+- `/feedback/retraining-status` and feedback responses report:
+  - `ready`
+  - `labeled_feedback_count`
+  - `minimum_required`
+  - status `message`
+
+### Simple ER diagram (schema view)
+
+```mermaid
+erDiagram
+    PREDICTIONS {
+        int id PK
+        datetime created_at
+        float years_experience
+        float skills_match_score
+        float education_level
+        float probability
+        string decision
+        float threshold
+        string model_version
+        int reviewed_label
+        datetime reviewed_at
+        string feedback_note
+    }
+```
+
+### Feedback loop flow
+
+```mermaid
+flowchart LR
+    A[POST /analyze] --> B[Insert prediction row in SQLite]
+    B --> C[Return prediction_id]
+    C --> D[POST /feedback/{prediction_id}]
+    D --> E[Update reviewed_label/reviewed_at/feedback_note]
+    E --> F[COUNT reviewed rows]
+    F --> G[Compare against minimum_required]
+    G --> H[Return retraining readiness status]
+```
 
 ## Project Structure
 
@@ -129,11 +217,33 @@ adaptive-resume-screener/
 
 The backend currently exposes these routes without an `/api` prefix:
 
-- `GET /health`
-- `POST /predict`
-- `POST /analyze`
-- `POST /feedback/{prediction_id}`
-- `GET /feedback/retraining-status`
+| Method | Endpoint | Purpose | Typical Request Body | Key Response Fields |
+| --- | --- | --- | --- | --- |
+| `GET` | `/health` | Service/model health snapshot | None | `status`, `model_loaded`, `device`, `threshold`, `model_version` |
+| `POST` | `/predict` | Direct prediction from numeric features | JSON (`years_experience`, `skills_match_score`, `education_level`, `project_count`, `resume_length`, `github_activity`) | `probability`, `decision`, `threshold` |
+| `POST` | `/analyze` | Resume + JD analysis and blended screening result | Multipart form (`resume` file + `job_description`) | `prediction_id`, `probability`, `decision`, `ats_score`, `semantic_score`, `final_score` |
+| `POST` | `/feedback/{prediction_id}` | Save reviewer label and optional note for a prediction | JSON (`reviewed_label`, optional `feedback_note`) | `saved`, `retrain_available`, `labeled_feedback_count`, `minimum_required`, `message` |
+| `GET` | `/feedback/retraining-status` | Check if enough labeled feedback exists for retraining | None | `ready`, `labeled_feedback_count`, `minimum_required`, `message` |
+
+### Short request-response flow
+
+```mermaid
+sequenceDiagram
+    participant U as User (Frontend)
+    participant API as FastAPI Backend
+    participant S as Parser/Analysis + Model
+    participant DB as SQLite
+
+    U->>API: POST /analyze (resume, job_description)
+    API->>S: parse + analyze + predict
+    S-->>API: scores + decision
+    API->>DB: save prediction
+    API-->>U: prediction_id + explainable result
+
+    U->>API: POST /feedback/{prediction_id}
+    API->>DB: save reviewed_label + note
+    API-->>U: feedback saved + retraining status
+```
 
 ## Run Locally
 
