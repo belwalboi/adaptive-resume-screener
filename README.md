@@ -50,16 +50,21 @@ The analysis service computes:
 
 ### 3. Model features
 
-The PyTorch model uses these 6 numeric features:
+The project uses a 6-value feature vector, with two input profiles depending on route:
+
+- **Manual `/predict` profile:** `years_experience`, `skills_match_score`, `education_level`, `projects_count`, `github_activity_score`, `certifications_count`
+- **Derived `/analyze` profile:** `years_experience`, `skills_match_score`, `education_level`, `project_count`, `resume_length`, `github_activity`
+
+Common derived-feature reference:
 
 | # | Feature | Description |
 | --- | --- | --- |
 | 1 | `years_experience` | Estimated years of relevant work experience. |
 | 2 | `skills_match_score` | Percent-style score for overlap between resume and job skills. |
 | 3 | `education_level` | Encoded education tier used by the model pipeline. |
-| 4 | `project_count` | Number of relevant projects detected in the resume. |
+| 4 | `project_count` / `projects_count` | Number of relevant projects detected in the resume. |
 | 5 | `resume_length` | Approximate resume text length signal. |
-| 6 | `github_activity` | Activity proxy derived from portfolio/GitHub mentions. |
+| 6 | `github_activity` / `github_activity_score` | Activity proxy derived from portfolio/GitHub mentions. |
 
 #### ResumeNet architecture (simple sketch)
 
@@ -120,6 +125,66 @@ The model should be used for **first-pass screening only**, not as a final hirin
 
 ![Confusion matrix for ResumeNet](notebooks/plots/confusion_matrix.png)
 
+## SQLite Schema and Feedback Linkage
+
+The app stores predictions and feedback in a single SQLite table: `predictions`.
+
+### What is stored in SQLite
+
+- core model inputs and outputs (`years_experience`, `skills_match_score`, `education_level`, `probability`, `decision`, `threshold`, `model_version`)
+- analysis artifacts for explainability (`ats_score`, `semantic_score`, `final_score`, matched/missing keywords, explanation)
+- provenance fields (`source`, `created_at`, `resume_filename`, `job_description`, `resume_excerpt`)
+- reviewer feedback fields (`reviewed_label`, `reviewed_at`, `feedback_note`)
+
+### How feedback is linked to `prediction_id`
+
+- each prediction insert returns an auto-increment `id`
+- `/analyze` response returns this value as `prediction_id`
+- `/feedback/{prediction_id}` updates that same row (`WHERE id = ?`) with `reviewed_label`, `reviewed_at`, and optional `feedback_note`
+
+### How retraining readiness is tracked
+
+- readiness is computed from `COUNT(*) WHERE reviewed_label IS NOT NULL`
+- the retraining trigger compares labeled count vs a configured minimum (default: `100`)
+- `/feedback/retraining-status` and feedback responses report:
+  - `ready`
+  - `labeled_feedback_count`
+  - `minimum_required`
+  - status `message`
+
+### Simple ER diagram (schema view)
+
+```mermaid
+erDiagram
+    PREDICTIONS {
+        int id PK
+        datetime created_at
+        float years_experience
+        float skills_match_score
+        float education_level
+        float probability
+        string decision
+        float threshold
+        string model_version
+        int reviewed_label
+        datetime reviewed_at
+        string feedback_note
+    }
+```
+
+### Feedback loop flow
+
+```mermaid
+flowchart LR
+    A[POST /analyze] --> B[Insert prediction row in SQLite]
+    B --> C[Return prediction_id]
+    C --> D[POST /feedback/{prediction_id}]
+    D --> E[Update reviewed_label/reviewed_at/feedback_note]
+    E --> F[COUNT reviewed rows]
+    F --> G[Compare against minimum_required]
+    G --> H[Return retraining readiness status]
+```
+
 ## Project Structure
 
 ```text
@@ -160,7 +225,7 @@ The backend currently exposes these routes without an `/api` prefix:
 | Method | Endpoint | Purpose | Typical Request Body | Key Response Fields |
 | --- | --- | --- | --- | --- |
 | `GET` | `/health` | Service/model health snapshot | None | `status`, `model_loaded`, `device`, `threshold`, `model_version` |
-| `POST` | `/predict` | Direct prediction from numeric features | JSON (`years_experience`, `skills_match_score`, `education_level`, `project_count`, `resume_length`, `github_activity`) | `probability`, `decision`, `threshold` |
+| `POST` | `/predict` | Direct prediction from numeric features | JSON (`years_experience`, `skills_match_score`, `education_level`, `projects_count`, `github_activity_score`, `certifications_count`) | `probability`, `decision`, `threshold` |
 | `POST` | `/analyze` | Resume + JD analysis and blended screening result | Multipart form (`resume` file + `job_description`) | `prediction_id`, `probability`, `decision`, `ats_score`, `semantic_score`, `final_score` |
 | `POST` | `/feedback/{prediction_id}` | Save reviewer label and optional note for a prediction | JSON (`reviewed_label`, optional `feedback_note`) | `saved`, `retrain_available`, `labeled_feedback_count`, `minimum_required`, `message` |
 | `GET` | `/feedback/retraining-status` | Check if enough labeled feedback exists for retraining | None | `ready`, `labeled_feedback_count`, `minimum_required`, `message` |
