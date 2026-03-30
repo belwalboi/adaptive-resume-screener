@@ -52,12 +52,28 @@ The analysis service computes:
 
 The PyTorch model uses these 6 numeric features:
 
-1. `years_experience`
-2. `skills_match_score`
-3. `education_level`
-4. `project_count`
-5. `resume_length`
-6. `github_activity`
+| # | Feature | Description |
+| --- | --- | --- |
+| 1 | `years_experience` | Estimated years of relevant work experience. |
+| 2 | `skills_match_score` | Percent-style score for overlap between resume and job skills. |
+| 3 | `education_level` | Encoded education tier used by the model pipeline. |
+| 4 | `project_count` | Number of relevant projects detected in the resume. |
+| 5 | `resume_length` | Approximate resume text length signal. |
+| 6 | `github_activity` | Activity proxy derived from portfolio/GitHub mentions. |
+
+#### ResumeNet architecture (simple sketch)
+
+```text
+Input (6 features)
+   │
+   ├─ In-model normalization: (x - mean) / std
+   │
+   ├─ Linear(6 → 128) + ReLU + BatchNorm1d
+   │
+   ├─ Linear(128 → 64) + ReLU
+   │
+   └─ Linear(64 → 1)  →  screening logit
+```
 
 ### 4. Prediction storage
 
@@ -129,11 +145,33 @@ adaptive-resume-screener/
 
 The backend currently exposes these routes without an `/api` prefix:
 
-- `GET /health`
-- `POST /predict`
-- `POST /analyze`
-- `POST /feedback/{prediction_id}`
-- `GET /feedback/retraining-status`
+| Method | Endpoint | Purpose | Typical Request Body | Key Response Fields |
+| --- | --- | --- | --- | --- |
+| `GET` | `/health` | Service/model health snapshot | None | `status`, `model_loaded`, `device`, `threshold`, `model_version` |
+| `POST` | `/predict` | Direct prediction from numeric features | JSON (`years_experience`, `skills_match_score`, `education_level`, `project_count`, `resume_length`, `github_activity`) | `probability`, `decision`, `threshold` |
+| `POST` | `/analyze` | Resume + JD analysis and blended screening result | Multipart form (`resume` file + `job_description`) | `prediction_id`, `probability`, `decision`, `ats_score`, `semantic_score`, `final_score` |
+| `POST` | `/feedback/{prediction_id}` | Save reviewer label and optional note for a prediction | JSON (`reviewed_label`, optional `feedback_note`) | `saved`, `retrain_available`, `labeled_feedback_count`, `minimum_required`, `message` |
+| `GET` | `/feedback/retraining-status` | Check if enough labeled feedback exists for retraining | None | `ready`, `labeled_feedback_count`, `minimum_required`, `message` |
+
+### Short request-response flow
+
+```mermaid
+sequenceDiagram
+    participant U as User (Frontend)
+    participant API as FastAPI Backend
+    participant S as Parser/Analysis + Model
+    participant DB as SQLite
+
+    U->>API: POST /analyze (resume, job_description)
+    API->>S: parse + analyze + predict
+    S-->>API: scores + decision
+    API->>DB: save prediction
+    API-->>U: prediction_id + explainable result
+
+    U->>API: POST /feedback/{prediction_id}
+    API->>DB: save reviewed_label + note
+    API-->>U: feedback saved + retraining status
+```
 
 ## Run Locally
 
