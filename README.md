@@ -97,16 +97,28 @@ An optional note is also stored. Labeled feedback is later used by the adaptive 
 
 ## Current Model Snapshot
 
-The saved checkpoint in `ml/models/resume_net.pt` evaluates to:
+The saved checkpoint in `ml/models/resume_net.pt` (test size: `6000`) reports:
 
-- Threshold: `0.30`
-- Accuracy: `0.6988`
-- Precision: `0.6988`
-- Recall: `1.0000`
-- F1: `0.8227`
-- Test size: `6000`
+| Metric | Value |
+| --- | --- |
+| Threshold | `0.30` |
+| Accuracy | `0.6988` |
+| Precision | `0.6988` |
+| Recall | `1.0000` |
+| F1 | `0.8227` |
+| AUC-ROC | `0.7982` |
 
-These results are suitable for a college prototype demo. They should not be presented as production hiring quality.
+This threshold is intentionally **recall-oriented** (more permissive) to reduce false negatives in early filtering.
+
+The model should be used for **first-pass screening only**, not as a final hiring decision system.
+
+### ROC Curve
+
+![ROC curve for ResumeNet](notebooks/plots/roc_curve.png)
+
+### Confusion Matrix
+
+![Confusion matrix for ResumeNet](notebooks/plots/confusion_matrix.png)
 
 ## Project Structure
 
