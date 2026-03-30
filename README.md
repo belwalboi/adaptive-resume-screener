@@ -178,7 +178,7 @@ erDiagram
 flowchart LR
     A[POST /analyze] --> B[Insert prediction row in SQLite]
     B --> C[Return prediction_id]
-    C --> D[POST /feedback/{prediction_id}]
+    C --> D[POST /feedback/:prediction_id]
     D --> E[Update reviewed_label/reviewed_at/feedback_note]
     E --> F[COUNT reviewed rows]
     F --> G[Compare against minimum_required]
@@ -245,7 +245,7 @@ sequenceDiagram
     API->>DB: save prediction
     API-->>U: prediction_id + explainable result
 
-    U->>API: POST /feedback/{prediction_id}
+    U->>API: POST /feedback/:prediction_id
     API->>DB: save reviewed_label + note
     API-->>U: feedback saved + retraining status
 ```
