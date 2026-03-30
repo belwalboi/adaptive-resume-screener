@@ -1,6 +1,6 @@
 # Team Roles and Responsibilities
 
-This document is written for a 5-student mini-project team. Replace the placeholder names with your real names before presenting.
+This document reflects the final 5-member split for the Adaptive Resume Screener mini-project. Each major role area is shared by two members so that the team has both ownership and backup during report writing, presentation, and viva.
 
 ## Role-to-Folder Ownership
 
@@ -8,17 +8,27 @@ Use this as the primary split of responsibility.
 
 | Member | Role | Main folders/files to own |
 | --- | --- | --- |
-| Member 1 | Project Lead and System Integrator | `README.md`, `docker-compose.yml`, `backend/main.py`, `sample_resume.txt` |
-| Member 2 | Frontend and Demo Flow | `frontend/` |
-| Member 3 | Backend and API | `backend/api/`, `backend/schemas/`, `backend/services/` |
-| Member 4 | ML and Feature Engineering | `ml/`, `feedback_loop/`, `data/`, `notebooks/` |
-| Member 5 | Database, Testing, and Deployment | `database/`, `docker/`, `tests/`, `.env.example`, `requirements.txt` |
+| Shubh and Aditya | Project Lead and System Integrator | `README.md`, `docker-compose.yml`, `backend/main.py`, `sample_resume.txt` |
+| Mrinalendu and Aditya | Frontend and Demo Flow | `frontend/` |
+| Harshit and Ritik | Backend and API | `backend/api/`, `backend/schemas/`, `backend/services/` |
+| Shubh and Ritik | ML and Feature Engineering | `ml/`, `feedback_loop/`, `data/`, `notebooks/` |
+| Mrinalendu and Harshit | Database, Testing, and Deployment | `database/`, `docker/`, `tests/`, `.env.example`, `requirements.txt` |
 
 This does not mean each member only knows their own folder. For the viva, everyone should still understand the full workflow from upload to feedback storage.
 
-## Suggested Team Split
+## Member-Wise Combined Responsibility Map
 
-### Member 1: Project Lead and System Integrator
+| Member | Shared roles | Main folders/files to prepare deeply | Primary viva ownership |
+| --- | --- | --- | --- |
+| Shubh | Project Lead and System Integrator; ML and Feature Engineering | `README.md`, `docker-compose.yml`, `backend/main.py`, `ml/`, `feedback_loop/`, `data/`, `notebooks/` | problem statement, architecture, ML logic, retraining, conclusion |
+| Aditya | Project Lead and System Integrator; Frontend and Demo Flow | `README.md`, `docker-compose.yml`, `backend/main.py`, `frontend/`, `sample_resume.txt` | integration story, system handoff, demo flow, UI walkthrough |
+| Mrinalendu | Frontend and Demo Flow; Database, Testing, and Deployment | `frontend/`, `database/`, `docker/`, `tests/`, `requirements.txt` | UI demo, feedback submission, storage overview, deployment basics |
+| Harshit | Backend and API; Database, Testing, and Deployment | `backend/api/`, `backend/schemas/`, `backend/services/`, `database/`, `docker/`, `tests/` | API flow, validation, persistence, schema, test coverage |
+| Ritik | Backend and API; ML and Feature Engineering | `backend/services/`, `ml/`, `feedback_loop/`, `data/`, `notebooks/` | feature engineering, model inference, metrics, retraining pipeline |
+
+## Named Role Briefs
+
+### Project Lead and System Integrator (Shubh and Aditya)
 
 Responsible for:
 
@@ -51,7 +61,7 @@ Should be ready to explain:
 - what makes the output explainable
 - how the whole system fits together in one pipeline
 
-### Member 2: Frontend and Demo Flow
+### Frontend and Demo Flow (Mrinalendu and Aditya)
 
 Responsible for:
 
@@ -82,13 +92,13 @@ Should be ready to explain:
 - how user feedback is submitted from the website
 - what happens on success and on error
 
-Questions this member should handle confidently:
+Questions this role should handle confidently:
 
 - What does the user see after clicking Analyze?
 - How do you show explainability in the UI?
 - How does the website know which prediction row to attach feedback to?
 
-### Member 3: Backend and API
+### Backend and API (Harshit and Ritik)
 
 Responsible for:
 
@@ -123,13 +133,13 @@ Should be ready to explain:
 - how feedback is linked to a specific prediction row
 - what each backend service does
 
-Questions this member should handle confidently:
+Questions this role should handle confidently:
 
 - Why did you separate routes, schemas, and services?
 - What does `/analyze` do internally?
 - How do you store `feedback_note` and `reviewed_label`?
 
-### Member 4: ML and Feature Engineering
+### ML and Feature Engineering (Shubh and Ritik)
 
 Responsible for:
 
@@ -168,13 +178,13 @@ Should be ready to explain:
 - why recall is high in the current checkpoint
 - how retraining readiness is checked
 
-Questions this member should handle confidently:
+Questions this role should handle confidently:
 
 - Why did you use a feature-based model instead of a transformer?
 - How is semantic similarity calculated?
 - What happens when enough labeled feedback is collected?
 
-### Member 5: Database, Testing, and Deployment
+### Database, Testing, and Deployment (Mrinalendu and Harshit)
 
 Responsible for:
 
@@ -210,11 +220,29 @@ Should be ready to explain:
 - how the app is started locally and with Docker
 - how the test suite improves confidence
 
-Questions this member should handle confidently:
+Questions this role should handle confidently:
 
 - Why did you choose SQLite?
 - How do you know feedback is really stored?
 - What should you do if the app fails during the demo?
+
+## Suggested Report Writing Split
+
+- Shubh: abstract support, project overview, system architecture, ML overview, limitations, future work
+- Aditya: problem statement, objectives, integration workflow, demo narrative, frontend explanation support
+- Mrinalendu: frontend design, UI flow, screenshots, feedback workflow, deployment notes
+- Harshit: backend design, API endpoints, validation flow, database operations, testing coverage
+- Ritik: feature engineering, model workflow, scoring logic, evaluation metrics, retraining pipeline
+
+## Suggested Viva Delivery Order
+
+1. Shubh: problem statement, objective, motivation, and high-level architecture
+2. Aditya: end-to-end integration story and transition into the live demo
+3. Mrinalendu: frontend workflow, analysis screen, result rendering, and feedback form
+4. Harshit: backend API flow, validation, parsing, database writes, and test coverage
+5. Ritik: feature engineering, model inference, evaluation metrics, threshold logic, and adaptive retraining
+6. Harshit and Mrinalendu: answer follow-up questions on SQLite, Docker, deployment, and troubleshooting
+7. Shubh: limitations, future work, and final conclusion
 
 ## Shared Knowledge Everyone Should Have
 
@@ -251,15 +279,6 @@ Use this to decide how deeply each member should prepare.
 | `tests/` | High | Low to Medium |
 | `data/` | Medium to High | Low |
 | `notebooks/` | Medium | Low |
-
-## Suggested Presentation Order
-
-1. Member 1: Problem and architecture
-2. Member 2: Frontend demo
-3. Member 3: Backend flow
-4. Member 4: ML logic and metrics
-5. Member 5: Database, testing, deployment, and retraining
-6. Member 1: Limitations and conclusion
 
 ## Demo Checklist
 
