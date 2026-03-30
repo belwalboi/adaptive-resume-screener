@@ -52,12 +52,28 @@ The analysis service computes:
 
 The PyTorch model uses these 6 numeric features:
 
-1. `years_experience`
-2. `skills_match_score`
-3. `education_level`
-4. `project_count`
-5. `resume_length`
-6. `github_activity`
+| # | Feature | Description |
+| --- | --- | --- |
+| 1 | `years_experience` | Estimated years of relevant work experience. |
+| 2 | `skills_match_score` | Percent-style score for overlap between resume and job skills. |
+| 3 | `education_level` | Encoded education tier used by the model pipeline. |
+| 4 | `project_count` | Number of relevant projects detected in the resume. |
+| 5 | `resume_length` | Approximate resume text length signal. |
+| 6 | `github_activity` | Activity proxy derived from portfolio/GitHub mentions. |
+
+#### ResumeNet architecture (simple sketch)
+
+```text
+Input (6 features)
+   │
+   ├─ In-model normalization: (x - mean) / std
+   │
+   ├─ Linear(6 → 128) + ReLU + BatchNorm1d
+   │
+   ├─ Linear(128 → 64) + ReLU
+   │
+   └─ Linear(64 → 1)  →  screening logit
+```
 
 ### 4. Prediction storage
 
